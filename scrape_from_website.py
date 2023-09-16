@@ -29,6 +29,9 @@ def convert_date_to_seconds(date_str):
             return int(value) * 2592000  # Assuming 30 days in a month on average
     return 0
 
+def remove_special_characters(title):
+    return " ".join(title.replace('\u2013', '').strip().split())
+
 driver = webdriver.Chrome()
 driver.get('https://www.youtube.com/@freecodecamp/videos')
 driver.implicitly_wait(5)
@@ -64,8 +67,9 @@ video_info = []
 # Loop through the lists and create dictionaries for each video
 for title, date_uploaded, views in zip(titles_text, date_uploaded_text, views_text):
     date_seconds = convert_date_to_seconds(date_uploaded)
+    cleaned_title = remove_special_characters(title)
     video_dict = {
-        'title': title,
+        'title': cleaned_title,
         'date_uploaded': date_uploaded,
         'date_seconds': date_seconds,
         'views': views,
@@ -77,20 +81,22 @@ for title, date_uploaded, views in zip(titles_text, date_uploaded_text, views_te
 input_sort = input('Sort Method: Ascending(a)/Descending(d)\n> ').lower()
 
 # Replace the original data with the sorted data
-if input_sort == 'ad':
-    video_info.sort(key=lambda x: x['date_seconds'])
-elif input_sort == 'av':
-    video_info.sort(key=lambda x: x['views_converted'])
-elif input_sort == 'dd':
-    video_info.sort(key=lambda x: x['date_seconds'], reverse=True)
-elif input_sort == 'dv':
-    video_info.sort(key=lambda x: x['views_converted'], reverse=True)
-else:
-    print('Invalid')
+match input_sort:
+    case 'ad':
+        video_info.sort(key=lambda x: x['date_seconds'])
+    case 'av':
+        video_info.sort(key=lambda x: x['views_converted'])
+    case 'dd':
+        video_info.sort(key=lambda x: x['date_seconds'], reverse=True)
+    case 'dv':
+        video_info.sort(key=lambda x: x['views_converted'], reverse=True)
+    case _:
+        print('Invalid')
 
 # Create dictionary, prettify
 channel_info = {'channel_name': channel_name, 'videos': video_info}
 pretty_channel_info = json.dumps(channel_info, indent=4)
 print(pretty_channel_info)
 
-# todo: fix title from having \u escape characters
+# todo: fix months conversion so that it is accurate (collect other data from page)
+# todo: add function to scrape multiple pages / scroll pages according to user input
